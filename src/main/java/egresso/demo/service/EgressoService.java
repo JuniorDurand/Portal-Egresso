@@ -43,17 +43,40 @@ public class EgressoService {
     @Autowired
     DepoimentoRepo repository_depoimento;
 
-    public Egresso Editar(Egresso egresso, List<CursoEgresso> cursos, List<ProfEgresso> proffissoes){
+    @Transactional
+    public Egresso salvarCadastro(Egresso egresso, List<CursoEgresso> cursos, List<ProfEgresso> proffissoes) {
+        verificarDadosEgressoNovo(egresso);
+        Egresso egresso_salvo = repository.save(egresso);
+        if (egresso_salvo == null) throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados do egresso");
+
+        for (CursoEgresso curso : cursos) {
+            curso.setEgresso(egresso_salvo);
+            verificarDadosCursoEgresso(curso, egresso_salvo);
+            if (repository_cursoEgresso.save(curso) == null) 
+                throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados do curso");
+        }
+
+        for (ProfEgresso profEgresso : proffissoes) {
+            profEgresso.setEgresso(egresso_salvo);
+            verificarDadosProfEgresso(profEgresso);
+            if (repository_profEgresso.save(profEgresso) == null) 
+                throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados da profissão");
+        }
+        
+        return egresso_salvo;
+    }
+
+    public Egresso editarCadastro(Egresso egresso, List<CursoEgresso> cursos, List<ProfEgresso> proffissoes){
         if ((egresso == null) || (egresso.getId() == null))
             throw new RegraNegocioRunTime("Egresso não identificado");
-        verificaDadosEgresso(egresso);
+        verificarDadosEgresso(egresso);
         Egresso egresso_salvo = repository.save(egresso);
         if (egresso_salvo == null) throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados do egresso");
 
         removerCursoEgresso(egresso_salvo);
         for (CursoEgresso curso : cursos) {
             curso.setEgresso(egresso_salvo);
-            verificaCursoEgresso(curso, egresso_salvo);
+            verificarDadosCursoEgresso(curso, egresso_salvo);
             if (repository_cursoEgresso.save(curso) == null) 
                 throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados do curso");
         }
@@ -61,7 +84,7 @@ public class EgressoService {
         removerProfEgresso(egresso_salvo);
         for (ProfEgresso profEgresso : proffissoes) {
             profEgresso.setEgresso(egresso_salvo);
-            verificaProfEgresso(profEgresso);
+            verificarDadosProfEgresso(profEgresso);
             if (repository_profEgresso.save(profEgresso) == null) 
                 throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados da profissão");
         }
@@ -69,7 +92,7 @@ public class EgressoService {
         return egresso_salvo;
     }
 
-    public void remover(Egresso egresso) {  
+    public void removerEgresso(Egresso egresso) {  
         if ((egresso == null) || (egresso.getId() == null))
             throw new RegraNegocioRunTime("Egresso sem id");      
         verificarDepoimento(egresso);
@@ -108,34 +131,12 @@ public class EgressoService {
             throw new RegraNegocioRunTime("Egresso informado está vinculado a um curso");
     }
 
-    public Egresso buscar(Egresso egresso){
+    public Egresso buscarEgresso(Egresso egresso){
         return repository.getById(egresso.getId());
     }
     
-    @Transactional
-    public Egresso salvar(Egresso egresso, List<CursoEgresso> cursos, List<ProfEgresso> proffissoes) {
-        verificaEgressoNovo(egresso);
-        Egresso egresso_salvo = repository.save(egresso);
-        if (egresso_salvo == null) throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados do egresso");
-
-        for (CursoEgresso curso : cursos) {
-            curso.setEgresso(egresso_salvo);
-            verificaCursoEgresso(curso, egresso_salvo);
-            if (repository_cursoEgresso.save(curso) == null) 
-                throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados do curso");
-        }
-
-        for (ProfEgresso profEgresso : proffissoes) {
-            profEgresso.setEgresso(egresso_salvo);
-            verificaProfEgresso(profEgresso);
-            if (repository_profEgresso.save(profEgresso) == null) 
-                throw new RegraNegocioRunTime("Ocorreu um problema inesperado ao salvar os dados da profissão");
-        }
-        
-        return egresso_salvo;
-    }
-
-    private void verificaDadosEgresso(Egresso egresso) {
+    
+    private void verificarDadosEgresso(Egresso egresso) {
         if (egresso == null)
             throw new RegraNegocioRunTime("Um egresso válido deve ser informado");                
         if ((egresso.getNome() == null) || (egresso.getNome().equals("")))
@@ -149,15 +150,15 @@ public class EgressoService {
         if ((egresso.getUrlFoto() == null) || (egresso.getUrlFoto().equals("")))
             throw new RegraNegocioRunTime("Uma foto deve ser inserida");
     }
-    private void verificaEgressoNovo(Egresso egresso) {
-        verificaDadosEgresso(egresso);
+    private void verificarDadosEgressoNovo(Egresso egresso) {
+        verificarDadosEgresso(egresso);
         boolean email = repository.existsByEmail(egresso.getEmail());
         if (email) throw new RegraNegocioRunTime("Email informado já existe");  
         boolean cpf = repository.existsByCpf(egresso.getCpf());
         if (cpf) throw new RegraNegocioRunTime("CPF informado já existe");
     }
 
-    private void verificaCursoEgresso(CursoEgresso curso, Egresso egresso) {
+    private void verificarDadosCursoEgresso(CursoEgresso curso, Egresso egresso) {
         if (egresso == null || (egresso.getId() == null))
             throw new RegraNegocioRunTime("Egresso invalido");  
         if (curso == null || (curso.getId() == null))
@@ -168,7 +169,7 @@ public class EgressoService {
             throw new RegraNegocioRunTime("Data de fim do curso é inválida"); 
     }
 
-    private void verificaProfEgresso(ProfEgresso profEgresso) {
+    private void verificarDadosProfEgresso(ProfEgresso profEgresso) {
         if ((profEgresso.getEgresso() == null))
             throw new RegraNegocioRunTime("Egresso inválido");
         if ((profEgresso.getCargo() == null))

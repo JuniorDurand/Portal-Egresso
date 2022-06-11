@@ -258,10 +258,10 @@ public class DepoimentoServiceTest {
 
         //ação
         service.remove(depoimentoSalvo);
-        Depoimento ret = repository.getById(depoimentoSalvo.getId());
+        boolean ret = repository.existsById(depoimentoSalvo.getId());
 
         //verificação
-        Assertions.assertNull(ret);
+        Assertions.assertFalse(ret);
     }
 
     @Test

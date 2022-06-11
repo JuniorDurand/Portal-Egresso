@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.transaction.Transactional;
+
 import org.junit.jupiter.api.Assertions;
 
 import egresso.demo.entity.Cargo;
@@ -20,15 +22,18 @@ import egresso.demo.entity.CursoEgressoId;
 import egresso.demo.entity.Egresso;
 import egresso.demo.entity.FaixaSalario;
 import egresso.demo.entity.ProfEgresso;
+import egresso.demo.entity.repository.CargoRepo;
 import egresso.demo.entity.repository.CursoEgressoRepo;
 import egresso.demo.entity.repository.CursoRepo;
 import egresso.demo.entity.repository.EgressoRepo;
+import egresso.demo.entity.repository.FaixaSalarioRepo;
 import egresso.demo.service.exceptions.RegraNegocioRunTime;
 
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 public class EgressoServiceTest {
 
     @Autowired
@@ -36,6 +41,12 @@ public class EgressoServiceTest {
     
     @Autowired
     EgressoRepo repository;
+
+    @Autowired
+    CargoRepo repository_cargo;
+
+    @Autowired
+    FaixaSalarioRepo repository_faixaSalario;
 
     @Autowired
     CursoRepo repository_curso;
@@ -109,7 +120,7 @@ public class EgressoServiceTest {
 
 
         Assertions.assertThrows(RegraNegocioRunTime.class, 
-                                    () -> service.salvar(egresso, cursos, profissoes), 
+                                    () -> service.salvarCadastro(egresso, cursos, profissoes), 
                                     "Nome do egresso deve ser informado");
     }
 
@@ -132,7 +143,7 @@ public class EgressoServiceTest {
         profissoes.add(profEgresso);
     
         Assertions.assertThrows(RegraNegocioRunTime.class, 
-                                    () -> service.salvar(egresso, cursos, profissoes),
+                                    () -> service.salvarCadastro(egresso, cursos, profissoes),
                                     "Cpf do egresso deve ser informado");   
     }
 
@@ -140,25 +151,29 @@ public class EgressoServiceTest {
     public void deveGerarErroSalvarComMesmoEmail() {
         Egresso egresso = this.createCenario();
         Curso curso = this.createCenarioCurso();
+        curso = repository_curso.save(curso);
         Cargo cargo = this.createCenarioCargo();
+        cargo = repository_cargo.save(cargo);
         FaixaSalario faixaSalario = this.createCenarioFaixaSalario();
+        faixaSalario = repository_faixaSalario.save(faixaSalario);
         CursoEgresso cursoEgresso = this.createCenarioCursoEgresso(curso, egresso);
+        cursoEgresso = repository_cursoEgresso.save(cursoEgresso); 
         List<CursoEgresso> cursos = new ArrayList();
         cursos.add(cursoEgresso);
         ProfEgresso profEgresso = this.createCenarioProfEgresso(egresso, cargo, faixaSalario);
         List<ProfEgresso> profissoes = new ArrayList();
         profissoes.add(profEgresso);
         
-        Egresso salvo = service.salvar(egresso, cursos, profissoes);
+        Egresso salvo = service.salvarCadastro(egresso, cursos, profissoes);
         Assertions.assertThrows(
                 RegraNegocioRunTime.class, 
-                        () -> service.salvar(egresso, cursos, profissoes)); 
+                        () -> service.salvarCadastro(egresso, cursos, profissoes)); 
 
         repository.delete(salvo);                                                      
     }
 
     @Test
-    public void salvarEgresso() {
+    public void deveVerificarSalvarCadastro() {
         Egresso egresso = this.createCenario();
         Curso curso = this.createCenarioCurso();
         Cargo cargo = this.createCenarioCargo();
@@ -170,7 +185,7 @@ public class EgressoServiceTest {
         List<ProfEgresso> profissoes = new ArrayList();
         profissoes.add(profEgresso);
         
-        Egresso salvo = service.salvar(egresso, cursos, profissoes);
+        Egresso salvo = service.salvarCadastro(egresso, cursos, profissoes);
         
         //verificação
         Assertions.assertNotNull(salvo);
@@ -181,6 +196,19 @@ public class EgressoServiceTest {
         repository.delete(salvo);                                                      
     }
 
+    @Test
+    public void deveVerificarremoverEgresso(){
+        //cenário
+        Egresso egresso = createCenario();
+        Egresso egresso_salvo = repository.save(egresso);
+
+        //ação
+        service.removerEgresso(egresso_salvo);
+        boolean res = repository.existsById(egresso_salvo.getId());
+
+        //verificação
+        Assertions.assertFalse(res);
+    }
 
     @Test
     public void deveGerarErroRemover() {
@@ -196,7 +224,7 @@ public class EgressoServiceTest {
 
 
         Assertions.assertThrows(RegraNegocioRunTime.class, 
-                                    () -> service.remover(egresso_salvo),
+                                    () -> service.removerEgresso(egresso_salvo),
                                     "Não pode remover pois está ligado a curso"); 
         
 
@@ -211,9 +239,12 @@ public class EgressoServiceTest {
         Egresso egresso = this.createCenario();
         Egresso egresso_salvo = repository.save(egresso);
 
-        Assertions.assertThrows(RegraNegocioRunTime.class, 
-                                    () -> service.remover(egresso_salvo),
-                                    "Não pode remover pois está ligado a curso"); 
+       //ação
+       service.removerEgresso(egresso_salvo);
+       boolean res = repository.existsById(egresso_salvo.getId());
+
+       //verificação
+       Assertions.assertFalse(res); 
         
   
         repository.delete(egresso_salvo);                                                       
