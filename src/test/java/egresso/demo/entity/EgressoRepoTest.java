@@ -1,5 +1,6 @@
 package egresso.demo.entity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -13,7 +14,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import egresso.demo.entity.repository.EgressoRepo;
-// import egresso.demo.entity.Egresso;
+import egresso.demo.entity.repository.CargoRepo;
+import egresso.demo.entity.repository.ProfEgressoRepo;
 
 @ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
@@ -23,6 +25,11 @@ public class EgressoRepoTest {
 
     @Autowired
     EgressoRepo repository;
+
+    @Autowired
+    ProfEgressoRepo repositoryProfEgresso;
+    @Autowired
+    CargoRepo repositoryCargo;
 
     private Egresso createCenario(){
       Egresso egresso = Egresso.builder()
@@ -34,6 +41,33 @@ public class EgressoRepoTest {
                                 .build();
 
       return egresso;
+    }
+
+    private ProfEgresso createCenarioProfEgresso(){
+      Egresso egresso = Egresso.builder()
+            .nome("Teste")
+            .email("teste@teste.com")
+            .cpf("333.333.333-33")
+            .resumo("kk")
+            .urlFoto("http://")
+            .build();
+
+      Cargo cargo = Cargo.builder()
+            .nome("Teste")
+            .descricao("Descricao teste")
+            .build();
+
+
+      ProfEgresso profEgresso = ProfEgresso.builder()
+                  .empresa("empresa teste")
+                  .descricao("descricao teste")
+                  .dataRegistro(LocalDate.of(2020, 1, 8))
+                  .egresso(egresso)
+                  .cargo(cargo)
+                  // .faixaSalario(faixaSalario)
+                  .build();
+
+      return profEgresso;
     }
     
     @Test
@@ -172,5 +206,22 @@ public class EgressoRepoTest {
       Assertions.assertFalse(ret);
 
       repository.delete(salvo);
+    }
+
+    @Test
+    public void deveVerificarContarEgressoPorCargo() throws Exception {
+      
+      //cenário
+      ProfEgresso profEgresso = createCenarioProfEgresso();
+      Cargo cargo = repositoryCargo.save(profEgresso.getCargo());
+      repository.save(profEgresso.getEgresso());
+      profEgresso = repositoryProfEgresso.save(profEgresso);
+
+      //ação
+
+      Long ret = repository.countEgressoByCargo(cargo);
+
+      // verificação
+      Assertions.assertEquals(1, ret);
     }
 }
