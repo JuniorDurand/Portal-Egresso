@@ -1,5 +1,7 @@
 package egresso.demo.service;
 
+import java.util.Optional;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,16 @@ public class FaixaSalarioService {
         varificarIdFaixaSalario(faixa_salario);
         verificarDadosFaixaSalario(faixa_salario);
         repository.delete(faixa_salario);
+    }
+
+    public FaixaSalario get(FaixaSalario faixa_salario){
+        varificarIdFaixaSalario(faixa_salario);
+        Optional<FaixaSalario> ret = repository.findById(faixa_salario.getId());
+
+        if (ret.isPresent()){
+            return ret.get();
+        }
+        return null;
     }
 
     public Long qntEgressoByFaixaSalario(FaixaSalario faixa_salario){

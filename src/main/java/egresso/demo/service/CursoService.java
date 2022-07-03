@@ -1,6 +1,7 @@
 package egresso.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.transaction.Transactional;
 
@@ -82,6 +83,16 @@ public class CursoService {
     private void varificarIdCurso(Curso curso){
         if ((curso == null) || (curso.getId() == null))
             throw new RegraNegocioRunTime("Curso não identificado");
+    }
+
+    public Curso get(Curso curso) {
+        this.varificarIdCurso(curso);
+        Optional<Curso> ret = repository.findById(curso.getId());
+
+        if (ret.isPresent()){
+            return ret.get();
+        }
+        return null;
     }
     
 }

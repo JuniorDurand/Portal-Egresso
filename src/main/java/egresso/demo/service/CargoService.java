@@ -1,6 +1,7 @@
 package egresso.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,16 @@ public class CargoService {
         this.checkCargoWithId(cargo);
         repository.delete(cargo);
     }
+
+    public Cargo get(Cargo cargo){
+        this.checkCargoOnlyId(cargo);
+        Optional<Cargo> ret = repository.findById(cargo.getId());
+
+        if (ret.isPresent()){
+            return ret.get();
+        }
+        return null;
+    }
     
     public List<Cargo> getCargoByEgresso(Egresso egresso){
         this.checkEgresso(egresso);
@@ -53,13 +64,20 @@ public class CargoService {
             throw new CargoServiceRunTime("Uma descricao deve ser informada no cargo"); 
         }
     }
-
-    private void checkCargoWithId(Cargo cargo){
-        this.checkCargo(cargo);
+    
+    private void checkCargoOnlyId(Cargo cargo){
         if(cargo.getId() == null){
+            throw new CargoServiceRunTime("Um cargo valido deve ser informado");
+        }else if(!repository.existsById(cargo.getId())){
             throw new CargoServiceRunTime("Um cargo valido deve ser informado");
         }
     }
+
+    private void checkCargoWithId(Cargo cargo){
+        this.checkCargoOnlyId(cargo);
+        this.checkCargo(cargo);
+    }
+
 
     private void checkEgresso(Egresso egresso){
         if(egresso == null){

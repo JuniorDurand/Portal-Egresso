@@ -1,6 +1,7 @@
 package egresso.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -29,9 +30,20 @@ public class DepoimentoService {
     }
 
     public void remove(Depoimento depoimento){
-        this.checkDepoimentoWithId(depoimento);
+        this.checkDepoimentoOnlyId(depoimento);
         repository.delete(depoimento);
     }
+
+    public Depoimento get(Depoimento depoimento){
+        this.checkDepoimentoOnlyId(depoimento);
+        Optional<Depoimento> ret = repository.findById(depoimento.getId());
+
+        if (ret.isPresent()){
+            return ret.get();
+        }
+        return null;
+    }
+
     public List<Depoimento> getDepoimentosOrderByMostRecent(){
         return repository.findAll(Sort.by("data"));
     }
@@ -64,8 +76,16 @@ public class DepoimentoService {
 
     private void checkDepoimentoWithId(Depoimento depoimento){
         
+        this.checkDepoimentoOnlyId(depoimento);
         this.checkDepoimento(depoimento);
+    }
+
+    private void checkDepoimentoOnlyId(Depoimento depoimento){
+        
         if(depoimento.getId() == null){
+            throw new DepoimentoServiceRunTime("Um depoimento valido deve ser informado");
+        }
+        if (!repository.existsById(depoimento.getId())){
             throw new DepoimentoServiceRunTime("Um depoimento valido deve ser informado");
         }
     }
