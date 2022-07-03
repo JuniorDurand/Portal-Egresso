@@ -52,12 +52,6 @@ public class Egresso {
     private String urlFoto;
 
 
-    @ManyToMany
-    @JoinTable(
-      name = "contato_egresso",  
-      joinColumns = {@JoinColumn(name = "id_contato")}, 
-      inverseJoinColumns = @JoinColumn(name = "id_egresso"))
-      Set<Contato> contatos;
 
     // @ManyToMany
     // @JoinTable(
@@ -68,6 +62,10 @@ public class Egresso {
 
     @OneToMany(mappedBy = "egresso")
     private Set<CursoEgresso> cursoEgresso;
+
+    // relação many to many com contato (curso egresso no meio)
+    @OneToMany(mappedBy = "egresso")
+    private List<ContatoEgresso> contatoEgresso;
 
     @OneToMany(mappedBy = "egresso")
     private List<Depoimento> depoimentos;
