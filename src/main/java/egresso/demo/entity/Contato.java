@@ -1,6 +1,7 @@
 package egresso.demo.entity;
 
 
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -9,6 +10,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 
@@ -37,6 +39,7 @@ public class Contato {
     @Column(name= "url_logo")
     private String urlLogo;
 
-    @ManyToMany(mappedBy = "contatos")
-    Set<Egresso> Egressos;
+    // Relação many to many com egresso (tabela contato egresso no meio)
+    @OneToMany(mappedBy = "contato")
+    private List<ContatoEgresso> contatoEgresso;
 }
